@@ -528,17 +528,7 @@ function renderQuiz(selection) {
   quizContainer.innerHTML = "";
   emptyState.hidden = true;
 
-  let lastChapter = null;
-
   selection.forEach((q, index) => {
-    if (orderMode === "grouped" && q.chapitre !== lastChapter) {
-      const heading = document.createElement("div");
-      heading.className = "chapter-heading";
-      heading.textContent = `Chapitre ${q.chapitre}`;
-      quizContainer.appendChild(heading);
-      lastChapter = q.chapitre;
-    }
-
     const card = document.createElement("article");
     card.className = "question-card";
 
@@ -547,12 +537,8 @@ function renderQuiz(selection) {
     head.innerHTML = `
       <span class="question-number">Q${index + 1}</span>
       <span class="question-text"></span>
-      ${orderMode === "shuffled" ? '<span class="chapter-chip"></span>' : ""}
     `;
     head.querySelector(".question-text").textContent = q.question;
-    if (orderMode === "shuffled") {
-      head.querySelector(".chapter-chip").textContent = `Chapitre ${q.chapitre}`;
-    }
     card.appendChild(head);
 
     const list = document.createElement("ul");
@@ -621,22 +607,12 @@ function buildPdf(selection) {
   y += 10;
 
   /* ----- Questions ----- */
-  let lastChapter = null;
-
   selection.forEach((q, index) => {
     const num = index + 1;
-    const isShuffled = orderMode === "shuffled";
-
-    let chapterLabelHeight = 0;
-    const showChapterLabel = !isShuffled && q.chapitre !== lastChapter;
-    if (showChapterLabel) chapterLabelHeight = 7;
 
     doc.setFont("times", "bold");
     doc.setFontSize(11);
-    const questionPrefix = isShuffled
-      ? `${num}. (Chapitre ${q.chapitre})  `
-      : `${num}. `;
-    const qLines = doc.splitTextToSize(`${questionPrefix}${q.question}`, usableWidth);
+    const qLines = doc.splitTextToSize(`${num}. ${q.question}`, usableWidth);
     const qHeight = qLines.length * 5.3;
 
     doc.setFont("times", "normal");
@@ -649,20 +625,11 @@ function buildPdf(selection) {
       0
     );
 
-    const blockHeight = chapterLabelHeight + qHeight + propHeight + 7;
+    const blockHeight = qHeight + propHeight + 7;
 
     if (y + blockHeight > pageHeight - margin) {
       doc.addPage();
       y = margin;
-    }
-
-    if (showChapterLabel) {
-      doc.setFont("times", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(140, 145, 160);
-      doc.text(`CHAPITRE ${q.chapitre}`, margin, y + 3);
-      y += chapterLabelHeight;
-      lastChapter = q.chapitre;
     }
 
     doc.setFont("times", "bold");
